@@ -49,39 +49,21 @@ def my_features(filtered_events, feature_map):
 	##min- max
 	total_events1 = total_events[['idx', 'value']]
 
-	# min_events_value = total_events1.groupby(['idx']).min()
-
 	max_events_value = total_events1.groupby(['idx']).max()
-
-	# maxsubmin = max_events_value.sub(min_events_value)
 	max_events_value = max_events_value.reset_index()
 	max_events_value.columns = ['idx', 'max_value']
-	# min_events_value = min_events_value.reset_index()
-	# min_events_value.columns = ['idx', 'min_value']
-	# maxsubmin = maxsubmin.reset_index()
-	# maxsubmin.columns = ['idx', 'max-min']
-
-	# normalized_df = pd.merge(min_events_value, maxsubmin, on='idx')
-	# normalized_df = pd.merge(normalized_df, max_events_value, on='idx')
+	
 
 	df1 = pd.merge(total_events, max_events_value, on='idx')
-
 	df1_not_zero = df1[df1['max_value'] != 0]
 	df1_not_zero['value'] = df1_not_zero['value'] / df1_not_zero['max_value']
-
 	df1_zero = df1[df1['max_value'] == 0]
 
-	# df1_zero_events = df1_zero['idx'].value_counts()
-	# df1_zero_events = df1_zero_events.reset_index()
-	# df1_zero_events.columns = ['idx', 'counts']
-	# df1_zero = pd.merge(df1_zero, df1_zero_events, on='idx')
+
 	df1_zero['value'] = 1.0
 	# df1_zero = df1_zero[['patient_id', 'idx', 'value', 'min_value', 'max-min']]
 
 	aggregated_events = pd.concat([df1_zero, df1_not_zero])
-
-	ggregated_events = pd.concat([df1_zero, df1_not_zero])
-
 	aggregated_events = aggregated_events[['patient_id', 'idx', 'value']]
 	aggregated_events.columns = ['patient_id', 'feature_id', 'feature_value']
 
@@ -90,9 +72,6 @@ def my_features(filtered_events, feature_map):
 
 	aggregated_events['merged'] = aggregated_events.apply(lambda row: (row['feature_id'], row['feature_value']), axis=1)
 
-	# aggregated_events['merged'] = aggregated_events.set_index('feature_id')['feature_value'].T.apply(tuple)
-	# aggregated_events['merged'] = aggregated_events['feature_id'].astype(str) +':'+aggregated_events['feature_value'].astype(str)
-	# aggregated_events['merged'] = aggregated_events['merged'].astype(float)
 	patient_features = aggregated_events.groupby('patient_id')['merged'].apply(lambda x: x.tolist()).to_dict()
 
 	deliverable1 = open('../deliverables/test_features.txt', 'wb')
@@ -127,9 +106,7 @@ def my_classifier_predictions(X_train,Y_train,X_test):
 	#TODO: complete this
 	#regr1 = DecisionTreeClassifier(max_depth= 5)
 	regr1 = AdaBoostClassifier(DecisionTreeClassifier(max_depth=5), n_estimators=1000)
-	#regr1 = DecisionTreeClassifier(max_depth = 5)
-	#regr2 = AdaBoostClassifier(RandomForestClassifier(n_estimators= 100,random_state=123456,max_depth = 5), n_estimators= 500)
-	#regr1 = LinearSVC(C = 5)
+
 	regr2 = BaggingClassifier(regr1, n_estimators =10)
 	regr2.fit(X_train, Y_train)
 	Y_pred = regr2.predict(X_test)
